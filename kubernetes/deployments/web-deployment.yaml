@@ -18,7 +18,7 @@ spec:
       containers:
       - env:
         - name: HOWCHOO_HOST
-          value: staging.howchoo.com
+          value: qa.howchoo.com
         - name: HOWCHOO_DB_HOST
           value: db
         - name: HOWCHOO_REDIS_HOST
@@ -26,7 +26,7 @@ spec:
         - name: HOWCHOO_DB_NAME
           value: postgres
         - name: HOWCHOO_ENV
-          value: staging
+          value: qa
         image: gcr.io/howchoo-161906/web:test.1
         name: web
         ports:
