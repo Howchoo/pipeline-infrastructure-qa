@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: web-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: web
+        tier: frontend
+    spec:
+      containers:
+      - env:
+        - name: HOWCHOO_HOST
+          value: staging.howchoo.com
+        - name: HOWCHOO_DB_HOST
+          value: db
+        - name: HOWCHOO_REDIS_HOST
+          value: redis
+        - name: HOWCHOO_DB_NAME
+          value: postgres
+        - name: HOWCHOO_ENV
+          value: staging
+        image: gcr.io/howchoo-161906/web:146eb153a8a761e153346f72611876677350d3d8
+        name: web
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /secrets/database
+          name: database
+          readOnly: true
+      volumes:
+      - name: database
+        secret:
+          secretName: database

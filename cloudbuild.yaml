@@ -21,7 +21,7 @@ steps:
         CLUSTER=$$(gcloud config get-value container/cluster)
         PROJECT=$$(gcloud config get-value core/project)
         ZONE=$$(gcloud config get-value compute/zone)
-      
+
         gcloud container clusters get-credentials "$${CLUSTER}" \
           --project "$${PROJECT}" \
           --zone "$${ZONE}"
@@ -29,7 +29,7 @@ steps:
       - name: 'kube'
         path: /kube
 
-  # Retrieve and decrypt the GitHub Hub configuration. 
+  # Retrieve and decrypt the GitHub Hub configuration.
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'sh'
     args:
@@ -55,7 +55,7 @@ steps:
     args:
       - '-c'
       - |
-        kubectl apply --recursive -f kubernetes 
+        kubectl apply --recursive -f kubernetes
     volumes:
       - name: 'kube'
         path: /kube
@@ -72,8 +72,8 @@ steps:
       - |
         # Extract the container image from the qa pipeline deployment configuration file.
         CONTAINER_IMAGE=$(kubectl apply --dry-run \
-           -f kubernetes/deployments/pipeline.yaml \
-           -o jsonpath='{.spec.template.spec.containers[?(@.name == "pipeline")].image}')
+           -f kubernetes/deployments/web-deployment.yaml \
+           -o jsonpath='{.spec.template.spec.containers[?(@.name == "web")].image}')
 
         ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
@@ -82,35 +82,38 @@ steps:
         hub config --global user.email "$${ACTIVE_ACCOUNT}"
         hub config --global user.name "Google Container Builder"
 
+        # Clone the Howchoo/pipeline-infrastructure-production repo
+        # and patch the images
+        hub clone "/Howchoo/pipeline-infrastructure-production"
 
-        # Clone the ${_GITHUB_USERNAME}/pipeline-infrastructure-production repo
-        # and patch the pipeline deployment container image.
-        hub clone "https://github.com/${_GITHUB_USERNAME}/pipeline-infrastructure-production.git"
+        cd pipeline-infrastructure-production
 
         cat <<EOF > patch.yaml
         spec:
           template:
             spec:
               containers:
-                - name: pipeline
+                - name: web
                   image: $${CONTAINER_IMAGE}
         EOF
 
         kubectl patch --local -o yaml \
-          -f pipeline-infrastructure-production/kubernetes/deployments/pipeline.yaml \
+          -f kubernetes/deployments/web-deployment.yaml \
           -p "$(cat patch.yaml)" \
-          > pipeline.yaml
+          > web-deployment.yaml
+        mv web-deployment.yaml kubernetes/deployments/web-deployment.yaml
 
-        mv pipeline.yaml pipeline-infrastructure-production/kubernetes/deployments/pipeline.yaml
-
-        # Change to the pipeline-infrastructure-production directory
-        # commit the local changes, then issue a pull request.
-        cd pipeline-infrastructure-production
+        kubectl patch --local -o yaml \
+          -f kubernetes/deployments/worker-deployment.yaml \
+          -p "$(cat patch.yaml)" \
+          > worker-deployment.yaml
+        mv worker-deployment.yaml kubernetes/deployments/worker-deployment.yaml
 
         git checkout -b update-deployment-${BUILD_ID}
 
-        hub add kubernetes/deployments/pipeline.yaml
- 
+        hub add kubernetes/deployments/web-deployment.yaml
+        hub add kubernetes/deployments/worker-deployment.yaml
+
         hub commit -F- <<EOF
         Update the pipeline deployment
 
