@@ -84,7 +84,7 @@ steps:
 
         # Clone the Howchoo/pipeline-infrastructure-production repo
         # and patch the images
-        hub clone "/Howchoo/pipeline-infrastructure-production"
+        hub clone "https://github.com/Howchoo/pipeline-infrastructure-production.git"
 
         cd pipeline-infrastructure-production
 
