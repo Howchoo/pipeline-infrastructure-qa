@@ -141,3 +141,4 @@ steps:
         path: /config
       - name: 'kube'
         path: /kube
+timeout: 300s
