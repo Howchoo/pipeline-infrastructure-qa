@@ -27,7 +27,7 @@ spec:
           value: postgres
         - name: HOWCHOO_ENV
           value: qa
-        image: gcr.io/howchoo-161906/web:test.2
+        image: gcr.io/howchoo-161906/web:test.3
         name: web
         ports:
         - containerPort: 80
