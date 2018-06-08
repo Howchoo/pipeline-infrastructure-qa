@@ -29,7 +29,7 @@ spec:
           value: postgres
         - name: HOWCHOO_ENV
           value: qa
-        image: gcr.io/howchoo-161906/web:test.5
+        image: gcr.io/howchoo-161906/web:test.6
         name: web
         volumeMounts:
         - mountPath: /secrets/database
